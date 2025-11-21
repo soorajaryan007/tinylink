@@ -1,156 +1,125 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
+import { LinkItem } from "./types";
 
-interface Link {
-  code: string;
-  url: string;
-  clickCount: number;
-  lastClicked: string | null;
-  createdAt: string;
-}
-
-export default function Dashboard() {
-  const [links, setLinks] = useState<Link[]>([]);
+export default function Home() {
+  const [links, setLinks] = useState<LinkItem[]>([]);
   const [url, setUrl] = useState("");
   const [code, setCode] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [shortenedLink, setShortenedLink] = useState<string | null>(null);
+  const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || "";
 
-  async function loadLinks() {
-    const res = await fetch("/api/links");
-    const data = await res.json();
-    setLinks(data);
-  }
+  // Load existing links
+  useEffect(() => {
+    fetch("/api/links")
+      .then((res) => res.json())
+      .then((data) => setLinks(data));
+  }, []);
 
-  async function createLink() {
-    if (!url) return alert("URL required");
-
-    setLoading(true);
+  async function createLink(e: React.FormEvent) {
+    e.preventDefault();
 
     const res = await fetch("/api/links", {
       method: "POST",
       body: JSON.stringify({ url, code }),
     });
 
-    setLoading(false);
-
-    if (!res.ok) {
-      const err = await res.json();
-      alert(err.error || "Error creating link");
+    const data = await res.json();
+    if (data.error) {
+      alert(data.error);
       return;
     }
 
+    // Build the short URL
+    const shortUrl = `${window.location.origin}/${data.code}`;
+    setShortenedLink(shortUrl);
+
+    setLinks([...links, { code: data.code, url, clickCount: 0, lastClicked: null, createdAt: new Date().toISOString() }]);
+
     setUrl("");
     setCode("");
-    loadLinks();
   }
 
   async function deleteLink(code: string) {
-  const res = await fetch(`/api/links/${code}`, {
-    method: "DELETE",
-  });
-
-  if (res.ok) {
-    await loadLinks();
-  } else {
-    console.error("Delete failed");
+    await fetch(`/api/links/${code}`, { method: "DELETE" });
+    setLinks(links.filter((l) => l.code !== code));
   }
-}
-
-
-  useEffect(() => {
-    loadLinks();
-  }, []);
 
   return (
-    <div className="p-6 max-w-3xl mx-auto space-y-6">
+    <div className="max-w-2xl mx-auto p-6 space-y-8">
       <h1 className="text-3xl font-bold">TinyLink Dashboard</h1>
 
-      {/* Add Link Form */}
-      <div className="border p-4 rounded space-y-3">
+      {/* Create Link Form */}
+      <form onSubmit={createLink} className="space-y-4">
         <input
-          type="text"
+          type="url"
+          required
           placeholder="Enter long URL"
-          className="w-full p-2 border rounded"
           value={url}
           onChange={(e) => setUrl(e.target.value)}
+          className="w-full p-2 border rounded"
         />
 
         <input
           type="text"
           placeholder="Custom code (optional)"
-          className="w-full p-2 border rounded"
           value={code}
           onChange={(e) => setCode(e.target.value)}
+          className="w-full p-2 border rounded"
         />
 
-        <button
-          onClick={createLink}
-          disabled={loading}
-          className="bg-blue-600 text-white px-4 py-2 rounded disabled:bg-blue-300"
-        >
-          {loading ? "Creating..." : "Add Link"}
+        <button className="bg-black text-white px-4 py-2 rounded">
+          Create Link
         </button>
-      </div>
+      </form>
+
+      {/* Show Shortened Link */}
+      {shortenedLink && (
+        <div className="p-4 bg-green-100 border border-green-400 rounded">
+          <p className="font-semibold">Shortened Link:</p>
+          <a href={shortenedLink} target="_blank" className="text-blue-600 underline">
+            {shortenedLink}
+          </a>
+
+          <button
+            className="ml-4 px-3 py-1 bg-gray-800 text-white rounded"
+            onClick={() => navigator.clipboard.writeText(shortenedLink)}
+          >
+            Copy
+          </button>
+        </div>
+      )}
 
       {/* Links Table */}
-      <table className="w-full border text-sm">
+      <table className="w-full border-collapse">
         <thead>
-          <tr className="bg-gray-100">
-            <th className="p-2 border">Code</th>
-            <th className="p-2 border">URL</th>
-            <th className="p-2 border">Clicks</th>
-            <th className="p-2 border">Last Clicked</th>
-            <th className="p-2 border">Actions</th>
+          <tr className="border-b">
+            <th className="text-left p-2">Code</th>
+            <th className="text-left p-2">URL</th>
+            <th className="text-left p-2">Clicks</th>
+            <th></th>
           </tr>
         </thead>
-
         <tbody>
-          {links.map((link) => (
-            <tr key={link.code} className="border">
-              <td className="p-2 border">{link.code}</td>
-
-              <td className="p-2 border max-w-xs truncate">
-                <a
-                  href={`/code/${link.code}`}
-                  className="text-blue-600 underline"
-                >
-                  {link.url}
-                </a>
-              </td>
-
-              <td className="p-2 border">{link.clickCount}</td>
-
-              <td className="p-2 border">
-                {link.lastClicked
-                  ? new Date(link.lastClicked).toLocaleString()
-                  : "-"}
-              </td>
-
-              <td className="p-2 border">
+          {links.map((l) => (
+            <tr key={l.code} className="border-b">
+              <td className="p-2">{l.code}</td>
+              <td className="p-2">{l.url}</td>
+              <td className="p-2">{l.clickCount}</td>
+              <td className="p-2">
                 <button
-  onClick={() => deleteLink(link.code)}
-  className="text-red-600 underline"
->
-  Delete
-</button>
-
+                  className="text-red-600"
+                  onClick={() => deleteLink(l.code)}
+                >
+                  delete
+                </button>
               </td>
             </tr>
           ))}
-
-          {links.length === 0 && (
-            <tr>
-              <td
-                colSpan={5}
-                className="p-4 text-center text-gray-500 border-t"
-              >
-                No links yet.
-              </td>
-            </tr>
-          )}
         </tbody>
       </table>
     </div>
   );
 }
+
