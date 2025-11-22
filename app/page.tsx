@@ -92,34 +92,50 @@ export default function Home() {
       )}
 
       {/* Links Table */}
-      <table className="w-full border-collapse">
-        <thead>
-          <tr className="border-b">
-            <th className="text-left p-2">Code</th>
-            <th className="text-left p-2">URL</th>
-            <th className="text-left p-2">Clicks</th>
-            <th></th>
-          </tr>
-        </thead>
-        <tbody>
-          {links.map((l) => (
-            <tr key={l.code} className="border-b">
-              <td className="p-2">{l.code}</td>
-              <td className="p-2">{l.url}</td>
-              <td className="p-2">{l.clickCount}</td>
-              <td className="p-2">
-                <button
-                  className="text-red-600"
-                  onClick={() => deleteLink(l.code)}
-                >
-                  delete
-                </button>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      <table className="w-full border-collapse mt-6">
+  <thead>
+    <tr className="border-b bg-gray-100">
+      <th className="text-left p-2">Code</th>
+      <th className="text-left p-2">URL</th>
+      <th className="text-left p-2">Total Clicks</th>
+      <th className="text-left p-2">Last Clicked</th>
+      <th></th>
+    </tr>
+  </thead>
+
+  <tbody>
+    {links.map((l) => (
+      <tr key={l.code} className="border-b">
+        <td className="p-2">{l.code}</td>
+        <td className="p-2">{l.url}</td>
+
+        {/* Total Clicks */}
+        <td className="p-2">{l.clickCount}</td>
+
+        {/* Last Clicked Time */}
+        <td className="p-2">
+          {l.lastClicked ? (
+            new Date(l.lastClicked).toLocaleString()
+          ) : (
+            <span className="text-gray-500">-</span>
+          )}
+        </td>
+
+        <td className="p-2">
+          <button
+            className="text-red-600"
+            onClick={() => deleteLink(l.code)}
+          >
+            delete
+          </button>
+        </td>
+      </tr>
+    ))}
+  </tbody>
+</table>
+
     </div>
   );
 }
+
 
