@@ -97,6 +97,7 @@ export default function Home() {
     <tr className="border-b bg-gray-100">
       <th className="text-left p-2">Code</th>
       <th className="text-left p-2">URL</th>
+      <th className="text-left p-2">Short URL</th>
       <th className="text-left p-2">Total Clicks</th>
       <th className="text-left p-2">Last Clicked</th>
       <th></th>
@@ -104,33 +105,57 @@ export default function Home() {
   </thead>
 
   <tbody>
-    {links.map((l) => (
-      <tr key={l.code} className="border-b">
-        <td className="p-2">{l.code}</td>
-        <td className="p-2">{l.url}</td>
+    {links.map((l) => {
+      const shortUrl = `${window.location.origin}/${l.code}`;
 
-        {/* Total Clicks */}
-        <td className="p-2">{l.clickCount}</td>
+      return (
+        <tr key={l.code} className="border-b">
+          {/* Code */}
+          <td className="p-2">{l.code}</td>
 
-        {/* Last Clicked Time */}
-        <td className="p-2">
-          {l.lastClicked ? (
-            new Date(l.lastClicked).toLocaleString()
-          ) : (
-            <span className="text-gray-500">-</span>
-          )}
-        </td>
+          {/* Long URL */}
+          <td className="p-2">
+            <a
+              href={l.url}
+              target="_blank"
+              className="text-blue-600 underline break-all"
+            >
+              {l.url}
+            </a>
+          </td>
 
-        <td className="p-2">
-          <button
-            className="text-red-600"
-            onClick={() => deleteLink(l.code)}
-          >
-            delete
-          </button>
-        </td>
-      </tr>
-    ))}
+          {/* Short URL Column */}
+          <td className="p-2">
+            <a
+              href={shortUrl}
+              target="_blank"
+              className="text-blue-600 underline"
+            >
+              {shortUrl}
+            </a>
+          </td>
+
+          {/* Total Clicks */}
+          <td className="p-2">{l.clickCount}</td>
+
+          {/* Last Clicked */}
+          <td className="p-2">
+            {l.lastClicked ? (
+              new Date(l.lastClicked).toLocaleString()
+            ) : (
+              <span className="text-gray-500">-</span>
+            )}
+          </td>
+
+          {/* Delete */}
+          <td className="p-2">
+            <button className="text-red-600" onClick={() => deleteLink(l.code)}>
+              delete
+            </button>
+          </td>
+        </tr>
+      );
+    })}
   </tbody>
 </table>
 
